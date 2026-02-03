@@ -1,2 +1,2 @@
 # Particle_EEG_System
-# Open master branch
+## Open master branch
