@@ -1,0 +1,39 @@
+# Visual Studio
+.vs/
+*.vcxproj.user
+*.sdf
+*.db
+*.suo
+Debug/
+Release/
+x64/
+
+# Build outputs
+bin/
+obj/
+out/
+
+# CUDA
+*.cubin
+*.ptx
+*.fatbin
+*.nvperfdata
+
+# OpenGL / misc
+*.exe
+*.dll
+*.pdb
+
+# datasets: avoid committing large files
+datasets_csv/*.wav
+datasets_csv/*.bin
+datasets_csv/*.raw
+
+# vcpkg
+vcpkg_installed/
+buildtrees/
+packages/
+
+# OS
+Thumbs.db
+.DS_Store

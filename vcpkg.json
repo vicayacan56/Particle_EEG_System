@@ -1,0 +1,8 @@
+{
+  "name": "particle-eeg-spectrogram",
+  "version-string": "0.1.0",
+  "dependencies": [
+    "glew",
+    "freeglut"
+  ]
+}
