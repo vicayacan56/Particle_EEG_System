@@ -1,4 +1,4 @@
-﻿// ===================================================================================================
+// ===================================================================================================
 // kernel.cu - CUDA/cuFFT + OpenGL (VAO+Shaders) interop (3D PRO)
 // ===================================================================================================
 // 3D grid of particles: X=time, Y=freq (0..45Hz), Z=amplitude (dB mapped) with colormap
@@ -55,26 +55,9 @@
 #include <vector>
 #include <chrono>
 
-// Filesystem: prefer <filesystem>, fallback to experimental for older toolchains
-#if defined(__has_include)
-#  if __has_include(<filesystem>)
-#    include <filesystem>
-#    namespace fs = std::filesystem;
-#  elif __has_include(<experimental/filesystem>)
-#    include <experimental/filesystem>
-#    namespace fs = std::experimental::filesystem;
-#  else
-#    error "No <filesystem> or <experimental/filesystem> available"
-#  endif
-#else
-#  include <filesystem>
-#  namespace fs = std::filesystem;
-#endif
-
 #include <cuda_runtime.h>
 #include <cuda_gl_interop.h>
 #include <cufft.h>
-#include <windows.h>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -207,48 +190,6 @@ struct Settings {
     bool  show3DGrid = true;       // ¿Mostrar grid 3D?
 };
 static Settings g; // Instancia global - acceso como g.paused, g.channel, etc
-
-// ------------------------ Repo path / CLI helpers ------------------------
-static fs::path gCsvPath = fs::path("datasets_csv") / "sample.csv"; // default (resolved later)
-
-static fs::path getExeDir() {
-    char buf[MAX_PATH];
-    DWORD len = GetModuleFileNameA(nullptr, buf, MAX_PATH);
-    if (len == 0) return fs::current_path();
-    fs::path p(std::string(buf, (len > 0 ? len : 0)));
-    return p.parent_path();
-}
-
-static fs::path findRepoRoot() {
-    fs::path p = getExeDir();
-    for (int i = 0; i < 8; ++i) {
-        if (fs::exists(p / "datasets_csv")) return p;
-        if (!p.has_parent_path()) break;
-        p = p.parent_path();
-    }
-    // fallback: current path
-    return fs::current_path();
-}
-
-static fs::path resolveRepoPath(const fs::path& in) {
-    if (in.is_absolute()) return in.lexically_normal();
-    fs::path root = findRepoRoot();
-    return (root / in).lexically_normal();
-}
-
-static void parseArgs(int argc, char** argv) {
-    for (int i = 1; i < argc; ++i) {
-        std::string a = argv[i];
-        if (a == "--csv" && i + 1 < argc) {
-            gCsvPath = fs::path(argv[++i]);
-        }
-        else if (a == "--fs" && i + 1 < argc) {
-            try { g.fs = std::stof(argv[++i]); }
-            catch (...) { /* ignore invalid */ }
-        }
-    }
-    gCsvPath = resolveRepoPath(gCsvPath);
-}
 
 // ================= CSV multi-canal =================
 static inline void trim_inplace(std::string& tok) {
@@ -1838,14 +1779,12 @@ static void initPipeline() {
     for (int i = 0; i < kBuffers; ++i) CUDA_CHECK(cudaEventRecord(gReadyEvent[i], gStream));
     CUDA_CHECK(cudaStreamSynchronize(gStream));
 
-    // Resolve CSV path (gCsvPath may be set by CLI). Ensure it's resolved against repo root.
-    fs::path csv_resolved = resolveRepoPath(gCsvPath);
-    std::cout << "Repo root (detected): " << findRepoRoot().string() << "\n";
-    std::cout << "Using CSV: " << csv_resolved.string() << "\n";
+    const std::string csv_path =
+        R"(C:\Users\PC\source\repos\Particle_EEG_spectogram\Particle_EEG_spectogram\datasets_csv\s10_ex08.csv)";
 
     if (h_channels.empty()) {
-        if (!load_csv_channels(csv_resolved.string(), h_channels)) {
-            std::cerr << "No pude leer CSV: " << csv_resolved.string() << "\n"; std::exit(1);
+        if (!load_csv_channels(csv_path, h_channels)) {
+            std::cerr << "No pude leer CSV.\n"; std::exit(1);
         }
         std::cout << "CSV cargado. Canales=" << (int)h_channels.size() << "\n";
     }
@@ -4120,9 +4059,6 @@ int main(int argc, char** argv) {
     glutInitWindowSize(winW, winH);
 
     glutCreateWindow("EEG Spectrogram Particles 3D PRO (CUDA+cuFFT+OpenGL) - Overlay kept + 3D box/grid");
-
-    // Parse CLI args (--csv, --fs) to override defaults. Must be done before initPipeline().
-    parseArgs(argc, argv);
 
     initPipeline();
     initGLandInterop();
