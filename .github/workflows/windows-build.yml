@@ -1,0 +1,35 @@
+name: Build (Windows)
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up MSBuild path
+      uses: microsoft/setup-msbuild@v1.1
+
+    - name: Install vcpkg
+      run: |
+        git clone https://github.com/microsoft/vcpkg.git vcpkg
+        .\vcpkg\bootstrap-vcpkg.bat
+        .\vcpkg\vcpkg.exe install glew freeglut --triplet x64-windows
+
+    - name: Build solution
+      shell: powershell
+      run: |
+        msbuild Particle_EEG_spectogram.sln /p:Configuration=Release /p:Platform=x64
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: particle-eeg-artifacts
+        path: 
+          - Particle_EEG_spectogram\x64\Release\

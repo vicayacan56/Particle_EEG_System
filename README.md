@@ -19,6 +19,11 @@ Estructura recomendada
 - `vcpkg.json` — manifiesto de dependencias
 - `LICENSE`, `README.md`, `.gitignore`
 
+CI / Build
+- Este repo incluye un workflow de GitHub Actions para compilar la solución en Windows (Release x64). Si quieres probar localmente, ejecuta:
+  - PowerShell: `.\scripts\install_vcpkg.ps1` (instala vcpkg y dependencias)
+
+
 Instalación de dependencias con vcpkg (1 vez)
 1. git clone https://github.com/microsoft/vcpkg.git
 2. cd vcpkg
