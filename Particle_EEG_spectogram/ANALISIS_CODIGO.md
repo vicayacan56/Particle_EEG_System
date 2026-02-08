@@ -1,6 +1,6 @@
-# AN¡LISIS DETALLADO DEL C”DIGO kernel.cu
+# AN√ÅLISIS DETALLADO DEL C√ìDIGO kernel.cu
 
-## SECCI”N 1: HEADERS Y MACROS DE SEGURIDAD (lÌneas 1-80)
+## SECCI√ìN 1: HEADERS Y MACROS DE SEGURIDAD (l√≠neas 1-80)
 ```cpp
 // ===== Windows macro safety =====
 #if defined(_WIN32)
@@ -11,14 +11,14 @@
 #define NOMINMAX
 #endif
 ```
-**PropÛsito**: Evitar conflictos de macros de Windows con min/max de la STL.
+**Prop√≥sito**: Evitar conflictos de macros de Windows con min/max de la STL.
 
 ```cpp
 #define GLEW_NO_GLU
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 ```
-**PropÛsito**: Incluir GLEW (OpenGL Extension Wrangler) y GLUT (graphics toolkit).
+**Prop√≥sito**: Incluir GLEW (OpenGL Extension Wrangler) y GLUT (graphics toolkit).
 
 ```cpp
 #define CUDA_CHECK(call) do { \
@@ -31,62 +31,62 @@
   if (r != CUFFT_SUCCESS) { ... } \
 } while(0)
 ```
-**PropÛsito**: Macros para verificar errores CUDA y cuFFT. Si hay error, imprime y sale del programa.
+**Prop√≥sito**: Macros para verificar errores CUDA y cuFFT. Si hay error, imprime y sale del programa.
 
 ---
 
-## SECCI”N 2: VARIABLES GLOBALES - TRIPLE BUFFERING (lÌneas 83-112)
+## SECCI√ìN 2: VARIABLES GLOBALES - TRIPLE BUFFERING (l√≠neas 83-112)
 
 ```cpp
 static constexpr int kBuffers = 3;
 ```
-**PropÛsito**: 3 buffers para triple buffering (CPU comienza, 1 en GPU, 1 lista para presentar).
+**Prop√≥sito**: 3 buffers para triple buffering (CPU comienza, 1 en GPU, 1 lista para presentar).
 
 ```cpp
 static cudaStream_t gStream = nullptr;
 static cudaEvent_t  gReadyEvent[kBuffers] = { nullptr, nullptr, nullptr };
 static bool         gHasData[kBuffers] = { false, false, false };
 ```
-**PropÛsito**: 
-- `gStream`: Stream CUDA no-bloqueante para operaciones asÌncronas.
-- `gReadyEvent[i]`: Evento que se marca cuando el buffer `i` est· listo.
-- `gHasData[i]`: Flag indicando si el buffer `i` tiene datos v·lidos.
+**Prop√≥sito**: 
+- `gStream`: Stream CUDA no-bloqueante para operaciones as√≠ncronas.
+- `gReadyEvent[i]`: Evento que se marca cuando el buffer `i` est√° listo.
+- `gHasData[i]`: Flag indicando si el buffer `i` tiene datos v√°lidos.
 
 ```cpp
 static int gPresent = 0;    // Buffer actualmente visible
 static int gQueued = 0;     // Buffer en cola para mostrar
 static int gHeadForBuffer[kBuffers] = { 0,0,0 };  // Head del ring buffer para cada uno
 ```
-**PropÛsito**: GestiÛn de quÈ buffer se ve, quÈ se procesa.
+**Prop√≥sito**: Gesti√≥n de qu√© buffer se ve, qu√© se procesa.
 
 ---
 
-## SECCI”N 3: DATOS DE ESCALA Y HOVER (lÌneas 114-156)
+## SECCI√ìN 3: DATOS DE ESCALA Y HOVER (l√≠neas 114-156)
 
 ```cpp
-static float* h_scalePinned = nullptr;  // 2 floats (pinned memory = CPU acceso r·pido a GPU)
+static float* h_scalePinned = nullptr;  // 2 floats (pinned memory = CPU acceso r√°pido a GPU)
 static float  gScaleHost[2] = { -20.0f, 40.0f };  // Escala dB min/max
-static cudaEvent_t gScaleEvent = nullptr;  // SincronizaciÛn de escala
+static cudaEvent_t gScaleEvent = nullptr;  // Sincronizaci√≥n de escala
 ```
-**PropÛsito**: Pasar escala dB desde GPU a CPU de manera asÌncrona y eficiente.
+**Prop√≥sito**: Pasar escala dB desde GPU a CPU de manera as√≠ncrona y eficiente.
 
 ```cpp
-static float gRmsRaw = 0.0f;    // RMS de seÒal original
-static float gRmsFilt = 0.0f;   // RMS de seÒal filtrada
+static float gRmsRaw = 0.0f;    // RMS de se√±al original
+static float gRmsFilt = 0.0f;   // RMS de se√±al filtrada
 static float gRmsRemoved = 0.0f;  // RMS de ruido removido
 static float gRemovedPct = 0.0f;  // % de ruido removido
 ```
-**PropÛsito**: MÈtricas mostradas en HUD para feedback del filtro.
+**Prop√≥sito**: M√©tricas mostradas en HUD para feedback del filtro.
 
 ```cpp
-static float gPlaySpeed = 0.25f;  // Velocidad de reproducciÛn (0.25 = 4x m·s lento)
-static float gSampleFrac = 0.0f;  // FracciÛn de muestra (para avance suave)
+static float gPlaySpeed = 0.25f;  // Velocidad de reproducci√≥n (0.25 = 4x m√°s lento)
+static float gSampleFrac = 0.0f;  // Fracci√≥n de muestra (para avance suave)
 ```
-**PropÛsito**: Control de velocidad de playback.
+**Prop√≥sito**: Control de velocidad de playback.
 
 ---
 
-## SECCI”N 4: PICKING (HOVER CON RAT”N) (lÌneas 158-185)
+## SECCI√ìN 4: PICKING (HOVER CON RAT√ìN) (l√≠neas 158-185)
 
 ```cpp
 static GLuint pickFBO = 0;      // Framebuffer Object para picking
@@ -96,68 +96,68 @@ static GLuint pickProg = 0;     // Programa shader para picking
 static GLint  uPickMVPLoc = -1; // Location del uniform MVP en el shader
 static GLint  uPickPointSizeLoc = -1;  // Location del uniform point size
 ```
-**PropÛsito**: Sistema de picking: renderizar a una texturas especial donde cada pÌxel contiene el ID de la partÌcula m·s cercana.
+**Prop√≥sito**: Sistema de picking: renderizar a una texturas especial donde cada p√≠xel contiene el ID de la part√≠cula m√°s cercana.
 
 ```cpp
-static std::vector<int> gColSample0;  // gColSample0[col] = Ìndice de sample del primer FFT en esa columna
-static int gPickRadius = 6;  // Radio de b˙squeda alrededor del ratÛn (2R+1)x(2R+1)
+static std::vector<int> gColSample0;  // gColSample0[col] = √≠ndice de sample del primer FFT en esa columna
+static int gPickRadius = 6;  // Radio de b√∫squeda alrededor del rat√≥n (2R+1)x(2R+1)
 ```
-**PropÛsito**: Metadatos para saber quÈ muestra corresponde a cada columna visible.
+**Prop√≥sito**: Metadatos para saber qu√© muestra corresponde a cada columna visible.
 
 ```cpp
 static float* h_hoverPinned = nullptr;  // 1 float (pinned) para el valor dB en hover
-static cudaEvent_t gHoverEvent = nullptr;  // SincronizaciÛn de lectura hover
-static bool        gHoverPending = false;  // øEsperando lectura desde GPU?
-static bool        gHoverValid = false;    // øHover v·lido?
+static cudaEvent_t gHoverEvent = nullptr;  // Sincronizaci√≥n de lectura hover
+static bool        gHoverPending = false;  // ¬øEsperando lectura desde GPU?
+static bool        gHoverValid = false;    // ¬øHover v√°lido?
 static float       gHoverHz = 0.0f;        // Frecuencia en hover
 static float       gHoverDb = 0.0f;        // Amplitud dB en hover
 static int         gHoverCol = -1, gHoverRow = -1;  // Coordenadas del hover
-static int         gMouseX = 0, gMouseY = 0;  // PosiciÛn del ratÛn
+static int         gMouseX = 0, gMouseY = 0;  // Posici√≥n del rat√≥n
 static float gHoverTimeSec = 0.0f;  // Tiempo en segundos del punto hover
 static int   gHoverDispCol = -1;    // Columna visible (0..Wvis-1)
 ```
-**PropÛsito**: Almacenar datos del punto donde est· el hover (˙til para tooltip).
+**Prop√≥sito**: Almacenar datos del punto donde est√° el hover (√∫til para tooltip).
 
 ---
 
-## SECCI”N 5: ESTRUCTURA SETTINGS (lÌneas 188-218)
+## SECCI√ìN 5: ESTRUCTURA SETTINGS (l√≠neas 188-218)
 
 ```cpp
 struct Settings {
-    bool paused = false;  // øPausado?
-    bool showHUDText = true;  // øMostrar HUD?
+    bool paused = false;  // ¬øPausado?
+    bool showHUDText = true;  // ¬øMostrar HUD?
     
-    bool  autoGain = true;    // øEscala autom·tica dB?
+    bool  autoGain = true;    // ¬øEscala autom√°tica dB?
     float dbMin = -30.0f;     // Escala min si autoGain OFF
     float dbMax = 30.0f;      // Escala max si autoGain OFF
     
-    float gamma = 1.0f;       // CorrecciÛn gamma (1.0 = linear)
+    float gamma = 1.0f;       // Correcci√≥n gamma (1.0 = linear)
     int   cmap = 0;           // 0=heat, 1=gray
     
-    float jitter = 0.06f;     // Amplitud de movimiento de partÌculas
+    float jitter = 0.06f;     // Amplitud de movimiento de part√≠culas
     int channel = 1;          // Canal del CSV a visualizar
     
     // ===== filtro previo a FFT =====
-    bool  preFilter = true;   // øAplicar filtro?
-    bool  showFiltered = true;  // øMostrar filtrada o raw?
-    bool  removeMean = true;    // øRemover DC?
+    bool  preFilter = true;   // ¬øAplicar filtro?
+    bool  showFiltered = true;  // ¬øMostrar filtrada o raw?
+    bool  removeMean = true;    // ¬øRemover DC?
     float fs = 256.0f;        // Frecuencia de muestreo (Hz)
     float lowHz = 45.0f;      // Filtro paso bajo (Hz)
-    bool  useHighpass = true;  // øUsar filtro paso alto?
+    bool  useHighpass = true;  // ¬øUsar filtro paso alto?
     float highHz = 0.5f;       // Filtro paso alto (Hz)
     
     // ===== 3D look =====
     float zScale = 0.9f;      // Escala de amplitud en Z
     int   timeGridEveryCols = 32;  // Gridlines cada N columnas
-    bool  show3DGrid = true;   // øMostrar grid 3D?
+    bool  show3DGrid = true;   // ¬øMostrar grid 3D?
 };
 static Settings g;  // Instancia global
 ```
-**PropÛsito**: Centralizar todas las opciones del programa.
+**Prop√≥sito**: Centralizar todas las opciones del programa.
 
 ---
 
-## SECCI”N 6: FUNCIONES CSV (lÌneas 220-318)
+## SECCI√ìN 6: FUNCIONES CSV (l√≠neas 220-318)
 
 ```cpp
 static inline void trim_inplace(std::string& tok) {
@@ -168,7 +168,7 @@ static inline void trim_inplace(std::string& tok) {
         [](unsigned char ch) { return !std::isspace(ch); }).base(), tok.end());
 }
 ```
-**PropÛsito**: Limpieza de strings.
+**Prop√≥sito**: Limpieza de strings.
 
 ```cpp
 static inline bool looks_like_number(const std::string& s) {
@@ -176,7 +176,7 @@ static inline bool looks_like_number(const std::string& s) {
     return false;
 }
 ```
-**PropÛsito**: Detectar si un token es un n˙mero (para saltar headers).
+**Prop√≥sito**: Detectar si un token es un n√∫mero (para saltar headers).
 
 ```cpp
 static inline char detect_delim(const std::string& line) {
@@ -185,20 +185,20 @@ static inline char detect_delim(const std::string& line) {
     return (c2 > c1) ? ';' : ',';
 }
 ```
-**PropÛsito**: Detectar si el CSV usa `,` o `;` como delimitador.
+**Prop√≥sito**: Detectar si el CSV usa `,` o `;` como delimitador.
 
 ```cpp
 static bool load_csv_channels(const std::string& path, std::vector<std::vector<float>>& channels_out) {
     // Lee CSV multi-canal en `channels_out`
-    // Detecta delimiter, salta headers, valida n˙meros
-    // Retorna true si leyÛ al menos 1 columna
+    // Detecta delimiter, salta headers, valida n√∫meros
+    // Retorna true si ley√≥ al menos 1 columna
 }
 ```
-**PropÛsito**: Cargar datos EEG del CSV.
+**Prop√≥sito**: Cargar datos EEG del CSV.
 
 ---
 
-## SECCI”N 7: FILTRO BIQUAD (lÌneas 320-400)
+## SECCI√ìN 7: FILTRO BIQUAD (l√≠neas 320-400)
 
 ```cpp
 struct Biquad {
@@ -212,7 +212,7 @@ struct Biquad {
     }
 };
 ```
-**PropÛsito**: Filtro IIR de 2do orden (butterworth).
+**Prop√≥sito**: Filtro IIR de 2do orden (butterworth).
 
 ```cpp
 static Biquad make_lowpass(float fs, float fc, float Q = 0.70710678f) {
@@ -223,21 +223,21 @@ static Biquad make_lowpass(float fs, float fc, float Q = 0.70710678f) {
 }
 
 static Biquad make_highpass(float fs, float fc, float Q = 0.70710678f) {
-    // An·logo para paso alto
+    // An√°logo para paso alto
 }
 
 static void preprocess_filter_inplace(std::vector<float>& x, float fs, ...) {
     // Aplica: remover DC -> HP -> 2x LP
 }
 ```
-**PropÛsito**: Preprocesamiento de seÒal antes del FFT.
+**Prop√≥sito**: Preprocesamiento de se√±al antes del FFT.
 
 ---
 
-## SECCI”N 8: VARIABLES STFT (lÌneas 402-475)
+## SECCI√ìN 8: VARIABLES STFT (l√≠neas 402-475)
 
 ```cpp
-static int   fftSize = 1024;  // TamaÒo FFT
+static int   fftSize = 1024;  // Tama√±o FFT
 static int   hop = 64;        // Desplazamiento entre ventanas
 static int   nBinsFull = 0;   // Bins totales FFT (fftSize/2 + 1)
 static int   maxBinVis = 0;   // Max bin a visualizar (limitado a ~45 Hz)
@@ -246,25 +246,25 @@ static float fTopShownHz = 45.0f;  // Max Hz mostrado
 
 static int Wvis = 256;  // Ancho del espectrograma (# columnas visibles)
 static int H = 0;       // Alto del espectrograma (# bins frecuencia)
-static int Nvis = 0;    // Total partÌculas = Wvis * H
+static int Nvis = 0;    // Total part√≠culas = Wvis * H
 
 static const int stepFrames = 4;  // Procesar 4 frames por tick
 static int B = stepFrames;
 
-static int startSample = 0;      // Õndice del primer sample a procesar
-static int maxStartSample = 0;   // Max v·lido de startSample
+static int startSample = 0;      // √çndice del primer sample a procesar
+static int maxStartSample = 0;   // Max v√°lido de startSample
 static int nSamples = 0;         // Total de samples del CSV
-static int gHead = 0;            // PosiciÛn "escribir" del ring buffer
+static int gHead = 0;            // Posici√≥n "escribir" del ring buffer
 ```
-**PropÛsito**: Par·metros STFT.
+**Prop√≥sito**: Par√°metros STFT.
 
 ```cpp
 static std::vector<std::vector<float>> h_channels;  // Todos los canales del CSV
 static std::vector<float> h_signal_raw;   // Canal seleccionado (sin filtro)
 static std::vector<float> h_signal_filt;  // Canal seleccionado (filtrado)
-static std::vector<float> h_signal;       // Puntero a raw o filt seg˙n g.showFiltered
+static std::vector<float> h_signal;       // Puntero a raw o filt seg√∫n g.showFiltered
 ```
-**PropÛsito**: Datos de seÒal en CPU.
+**Prop√≥sito**: Datos de se√±al en CPU.
 
 ```cpp
 static float* d_signal = nullptr;  // Signal en GPU
@@ -277,22 +277,22 @@ static float* d_spec_db[kBuffers] = { nullptr,nullptr,nullptr };  // [B, H] (dB)
 static cufftHandle plan = 0;  // Plan cuFFT batched
 static float* d_hist_db = nullptr;  // Historial total [Wvis, H] (ring buffer)
 
-static float2* d_off = nullptr;  // Offset de movimiento de partÌculas
+static float2* d_off = nullptr;  // Offset de movimiento de part√≠culas
 static float2* d_vel = nullptr;  // Velocidad de movimiento
 
 static float* d_minmax[kBuffers] = { ... };  // Min/max locales para cada buffer
 static float* d_scale = nullptr;  // Escala global [min, max]
 ```
-**PropÛsito**: Memoria GPU para STFT y procesamiento.
+**Prop√≥sito**: Memoria GPU para STFT y procesamiento.
 
 ```cpp
 static float gInvWinL2 = 1.0f;  // 1 / L2-norm de la ventana Hann
 ```
-**PropÛsito**: NormalizaciÛn de energÌa (COLA - Constant Overlap-Add).
+**Prop√≥sito**: Normalizaci√≥n de energ√≠a (COLA - Constant Overlap-Add).
 
 ---
 
-## SECCI”N 9: MATH - VEC3 Y MAT4 (lÌneas 477-650)
+## SECCI√ìN 9: MATH - VEC3 Y MAT4 (l√≠neas 477-650)
 
 ```cpp
 struct Vec3 {
@@ -301,7 +301,7 @@ struct Vec3 {
     Vec3(float X, float Y, float Z) :x(X), y(Y), z(Z) {}
 };
 ```
-**PropÛsito**: Vector 3D b·sico.
+**Prop√≥sito**: Vector 3D b√°sico.
 
 ```cpp
 static inline Vec3 operator+(const Vec3& a, const Vec3& b) { ... }  // Suma
@@ -310,67 +310,67 @@ static inline Vec3 operator*(const Vec3& a, float s) { ... }  // Escala
 static inline float dot(const Vec3& a, const Vec3& b) { ... }  // Producto escalar
 static inline Vec3 cross(const Vec3& a, const Vec3& b) { ... }  // Producto cruz
 static inline float vlen(const Vec3& v) { ... }  // Magnitud
-static inline Vec3 normalize(const Vec3& v) { ... }  // NormalizaciÛn
+static inline Vec3 normalize(const Vec3& v) { ... }  // Normalizaci√≥n
 ```
-**PropÛsito**: Operaciones b·sicas de ·lgebra linear.
+**Prop√≥sito**: Operaciones b√°sicas de √°lgebra linear.
 
 ```cpp
 struct Mat4 {
     float m[16];  // Column-major (OpenGL)
 };
 ```
-**PropÛsito**: Matriz 4x4 para transformaciones 3D.
+**Prop√≥sito**: Matriz 4x4 para transformaciones 3D.
 
 ```cpp
 static Mat4 mat4_identity() { ... }  // Matriz identidad
-static Mat4 mat4_mul(const Mat4& A, const Mat4& B) { ... }  // MultiplicaciÛn
+static Mat4 mat4_mul(const Mat4& A, const Mat4& B) { ... }  // Multiplicaci√≥n
 static Mat4 mat4_perspective(float fovyRad, float aspect, float zNear, float zFar) { ... }
 static Mat4 mat4_lookAt(const Vec3& eye, const Vec3& center, const Vec3& up) { ... }
 ```
-**PropÛsito**: Transformaciones de c·mara (proyecciÛn + view).
+**Prop√≥sito**: Transformaciones de c√°mara (proyecci√≥n + view).
 
 ```cpp
 static bool mat4_inverse(const Mat4& M, Mat4& invOut) { ... }  // Inversa 4x4
 static Vec3 unprojectNDC(const Mat4& invMVP, float ndcX, float ndcY, float ndcZ) { ... }
 ```
-**PropÛsito**: Para picking (pasar de coordenadas pantalla a mundo).
+**Prop√≥sito**: Para picking (pasar de coordenadas pantalla a mundo).
 
 ---
 
-## SECCI”N 10: CAMERA (lÌneas 652-707)
+## SECCI√ìN 10: CAMERA (l√≠neas 652-707)
 
 ```cpp
 static int winW = 1100, winH = 700;  // Dimensiones ventana
 
-static float gYaw = 0.7f;     // RotaciÛn horizontal (radianes)
-static float gPitch = 0.35f;  // RotaciÛn vertical
+static float gYaw = 0.7f;     // Rotaci√≥n horizontal (radianes)
+static float gPitch = 0.35f;  // Rotaci√≥n vertical
 static float gDist = 3.0f;    // Distancia a target
 static Vec3  gTarget = Vec3(0.0f, 0.0f, 0.0f);  // Punto de enfoque
 
-static bool gMouseL = false;  // øRatÛn izquierdo presionado?
-static bool gMouseR = false;  // øRatÛn derecho presionado?
-static int  gLastMX = 0, gLastMY = 0;  // ⁄ltima posiciÛn ratÛn
+static bool gMouseL = false;  // ¬øRat√≥n izquierdo presionado?
+static bool gMouseR = false;  // ¬øRat√≥n derecho presionado?
+static int  gLastMX = 0, gLastMY = 0;  // √öltima posici√≥n rat√≥n
 ```
-**PropÛsito**: Controles de c·mara orbital (esferas).
+**Prop√≥sito**: Controles de c√°mara orbital (esferas).
 
 ```cpp
 static Mat4 buildMVP() {
     // Construye Projection * View (Model es identidad)
-    // Orbita alrededor de gTarget seg˙n gYaw, gPitch, gDist
+    // Orbita alrededor de gTarget seg√∫n gYaw, gPitch, gDist
 }
 ```
-**PropÛsito**: MVP actual para renderizado.
+**Prop√≥sito**: MVP actual para renderizado.
 
 ---
 
-## SECCI”N 11: PICKING (lÌneas 709-820)
+## SECCI√ìN 11: PICKING (l√≠neas 709-820)
 
 ```cpp
 static bool pickNearestPointID(const Mat4& MVP, unsigned int& outID) {
     // Renderiza a FBO especial con IDs en RGB
-    // Lee pÌxeles alrededor del ratÛn
-    // Busca el ID m·s cercano al centro
-    // Retorna el ID de la partÌcula m·s cercana
+    // Lee p√≠xeles alrededor del rat√≥n
+    // Busca el ID m√°s cercano al centro
+    // Retorna el ID de la part√≠cula m√°s cercana
     
     glBindFramebuffer(GL_FRAMEBUFFER, pickFBO);
     glViewport(0, 0, winW, winH);
@@ -381,13 +381,13 @@ static bool pickNearestPointID(const Mat4& MVP, unsigned int& outID) {
     glUniformMatrix4fv(uPickMVPLoc, 1, GL_FALSE, MVP.m);
     glUniform1f(uPickPointSizeLoc, 8.0f);
     
-    glBindVertexArray(vao[gPresent]);  // <<<<< AQUÕ EL ERROR
+    glBindVertexArray(vao[gPresent]);  // <<<<< AQU√ç EL ERROR
     glDrawArrays(GL_POINTS, 0, Nvis);
     
-    // ReadPixels y b˙squeda...
+    // ReadPixels y b√∫squeda...
 }
 ```
-**PropÛsito**: Sistema de picking renderizando con IDs.
+**Prop√≥sito**: Sistema de picking renderizando con IDs.
 
 ```cpp
 static void updateHoverByNearestPoint(const Mat4& MVP) {
@@ -399,20 +399,20 @@ static void updateHoverByNearestPoint(const Mat4& MVP) {
 static void updateHoverSample(const Mat4& MVP) {
     // Alternativa: raycasting en el plano Z=0
     // Convierte coordenadas pantalla -> mundo
-    // IntersecciÛn con plano espectrograma
+    // Intersecci√≥n con plano espectrograma
 }
 ```
-**PropÛsito**: Dos mÈtodos para saber quÈ punto es hover (picking O raycasting).
+**Prop√≥sito**: Dos m√©todos para saber qu√© punto es hover (picking O raycasting).
 
 ---
 
-## SECCI”N 12: RECURSOS OPENGL (lÌneas 822-950)
+## SECCI√ìN 12: RECURSOS OPENGL (l√≠neas 822-950)
 
 ```cpp
 static GLuint vao[kBuffers] = { 0,0,0 };  // Vertex Array Objects (3 buffers)
 static GLuint vboPos[kBuffers] = { 0,0,0 };  // Position VBO [Nvis * float4]
 static GLuint vboCol[kBuffers] = { 0,0,0 };  // Color VBO [Nvis * float4]
-static GLuint program = 0;  // Programa shader de partÌculas
+static GLuint program = 0;  // Programa shader de part√≠culas
 
 static GLint uMvpLoc = -1;     // Uniform MVP
 static GLint uPointSizeLoc = -1;  // Uniform point size
@@ -420,7 +420,7 @@ static GLint uPointSizeLoc = -1;  // Uniform point size
 static cudaGraphicsResource* cudaPosRes[kBuffers] = { nullptr,nullptr,nullptr };
 static cudaGraphicsResource* cudaColRes[kBuffers] = { nullptr,nullptr,nullptr };
 ```
-**PropÛsito**: Recursos de partÌculas 3D con CUDA-OpenGL interop.
+**Prop√≥sito**: Recursos de part√≠culas 3D con CUDA-OpenGL interop.
 
 ```cpp
 // 3D Cube (wireframe)
@@ -429,7 +429,7 @@ static GLuint cubeVBO = 0;
 static GLuint cubeEBO = 0;
 static GLuint cubeProg = 0;
 ```
-**PropÛsito**: Caja 3D para enmarcar el espacio.
+**Prop√≥sito**: Caja 3D para enmarcar el espacio.
 
 ```cpp
 // 3D Axis box + gridlines
@@ -442,7 +442,7 @@ static std::vector<AxisVert> gAxisVerts;
 static int gAxisEdgeCount = 0;  // # verts para los 12 bordes
 static int gAxisGridCount = 0;  // # verts para las gridlines
 ```
-**PropÛsito**: Ejes 3D + gridlines.
+**Prop√≥sito**: Ejes 3D + gridlines.
 
 ```cpp
 // Overlay (2D)
@@ -452,11 +452,11 @@ static GLuint overlayVBO = 0;
 
 struct OverlayVert { float x, y; float r, g, b, a; };
 ```
-**PropÛsito**: Leyenda 2D + ejes 2D de referencia.
+**Prop√≥sito**: Leyenda 2D + ejes 2D de referencia.
 
 ---
 
-## SECCI”N 13: KERNELS CUDA (lÌneas 952-1260)
+## SECCI√ìN 13: KERNELS CUDA (l√≠neas 952-1260)
 
 ### Kernel: `build_frames_hann_offset()`
 ```cuda
@@ -470,7 +470,7 @@ __global__ void build_frames_hann_offset(
     // frames[frame * fftSize + k] = signal[startSample + frame*hop + k] * window[k]
 }
 ```
-**PropÛsito**: Construir B ventanas de datos (overlap-add).
+**Prop√≥sito**: Construir B ventanas de datos (overlap-add).
 
 ### Kernel: `mag_db_from_r2c_clip()`
 ```cuda
@@ -482,7 +482,7 @@ __global__ void mag_db_from_r2c_clip(
     // spec_db[frame*Hvis + bin] = 20*log10(mag + eps)
 }
 ```
-**PropÛsito**: FFT a espectrograma dB.
+**Prop√≥sito**: FFT a espectrograma dB.
 
 ### Kernel: `write_hist_cols()`
 ```cuda
@@ -495,7 +495,7 @@ __global__ void write_hist_cols(
     // donde col = (head + f) % Wvis
 }
 ```
-**PropÛsito**: Actualizar historial de espectrograma.
+**Prop√≥sito**: Actualizar historial de espectrograma.
 
 ### Kernel: `hist_to_vbos_3d()`
 ```cuda
@@ -506,19 +506,19 @@ __global__ void hist_to_vbos_3d(
     int Wvis, int H, int head,
     const float* scale, ...)
 {
-    // Para cada partÌcula:
+    // Para cada part√≠cula:
     // 1) X = tiempo normalizado (scroll)
     // 2) Y = frecuencia normalizada
     // 3) Z = amplitud (dB) mapeada
     // 4) Color = colormap(Z)
-    // 5) Movimiento en XY con fÌsica de spring
+    // 5) Movimiento en XY con f√≠sica de spring
 }
 ```
-**PropÛsito**: Llenar VBOs 3D de posiciones + colores.
+**Prop√≥sito**: Llenar VBOs 3D de posiciones + colores.
 
 ---
 
-## SECCI”N 14: INICIALIZACI”N (lÌneas 1262-1600)
+## SECCI√ìN 14: INICIALIZACI√ìN (l√≠neas 1262-1600)
 
 ```cpp
 static void initPipeline() {
@@ -526,14 +526,14 @@ static void initPipeline() {
     // 2) Crear stream y eventos CUDA
     // 3) Allocate pinned memory para escala y hover
     // 4) Cargar CSV
-    // 5) Calcular par·metros STFT
+    // 5) Calcular par√°metros STFT
     // 6) Allocate GPU memory
     // 7) Crear plan cuFFT batched
 }
 
 static void initGLandInterop() {
     // 1) Init GLEW
-    // 2) Crear programa shader de partÌculas
+    // 2) Crear programa shader de part√≠culas
     // 3) Crear VAO/VBO para 3 buffers
     // 4) Registrar VBOs con CUDA
     // 5) Crear ejes, cubo, overlay, picking
@@ -543,23 +543,23 @@ static void primeFirstFrame() {
     // Procesar primer frame para tener datos iniciales
 }
 ```
-**PropÛsito**: Inicializar todo el pipeline.
+**Prop√≥sito**: Inicializar todo el pipeline.
 
 ---
 
-## SECCI”N 15: DISPLAY LOOP (lÌneas 1750-1900)
+## SECCI√ìN 15: DISPLAY LOOP (l√≠neas 1750-1900)
 
 ```cpp
 static void display() {
     // 1) Actualizar FPS
-    // 2) Triple buffering: cambiar gPresent si est· listo
+    // 2) Triple buffering: cambiar gPresent si est√° listo
     // 3) Si no pausado: procesar siguiente buffer
     // 4) MVP = buildMVP()
     // 5) Picking (si hay hover)
     // 6) glClear + render:
     //    - Cubo wireframe (no depth write)
     //    - Axis box + gridlines
-    //    - PartÌculas (points)
+    //    - Part√≠culas (points)
     //    - Labels 3D (Hz en Y, dB en Z)
     //    - Overlay 2D
     //    - Tooltip
@@ -567,31 +567,31 @@ static void display() {
     // 7) glutSwapBuffers()
 }
 ```
-**PropÛsito**: Loop principal de renderizado.
+**Prop√≥sito**: Loop principal de renderizado.
 
 ---
 
 ## RESUMEN DE ARQUITECTURA
 
 ```
-CSV ? Load ? SeÒal Raw
-            ?
+CSV ¬¨ Load ¬¨ Se√±al Raw
+            |
          Filtro (CPU)
-            ?
-         SeÒal Filt ? GPU d_signal
-                       ?
+            |
+         Se√±al Filt ? GPU d_signal
+                       |
             Windowed frames (kernel)
-                       ?
+                       |
               cuFFT R2C (batched)
-                       ?
+                       |
           Magnitud ? dB (kernel)
-                       ?
+                       |
          Write hist_db (kernel)
-                       ?
+                       |
       hist_to_vbos_3d (kernel)
-                       ?
+                       |
          VBOs (pos + col)
-                       ?
+                       |
             Renderizado 3D
 ```
 
